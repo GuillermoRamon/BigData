@@ -179,7 +179,7 @@ def main(args: Array[String]) {
  .getOrCreate()
 
  // Get the path to the JSON file
- val jsonFile = "/FileStore/tables/blogs.json"
+ val jsonFile = "/FileStore/tables/blog.json"
  // Define our schema programmatically
  val schema = StructType(Array(StructField("Id", IntegerType, false),
  StructField("First", StringType, false),

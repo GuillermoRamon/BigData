@@ -241,7 +241,7 @@ val df = spark.read.format("csv")
  .load(csvFile)
 df.createOrReplaceTempView("us_delay_flights_tbl")
 // convert the date column into a readable format and find the days or months when these delays were most common
-spark.sql("""SELECT cast(date to Timestamp), delay, origin, destination 
+spark.sql("""SELECT cast(date AS Timestamp), delay, origin, destination 
 FROM us_delay_flights_tbl 
 WHERE delay > 120 AND ORIGIN = 'SFO' AND DESTINATION = 'ORD' 
 ORDER by delay DESC""").show(10)
@@ -303,3 +303,115 @@ df.show(false)*/
 
 //val file = """/FileStore/tables/ejercicioExtra.parquet"""
 //val df = spark.read.format("parquet").load(file)
+
+
+// COMMAND ----------
+
+// MAGIC %md
+// MAGIC #Extras del tema 5
+
+// COMMAND ----------
+
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
+//Pros y Cons utilizar UDFs
+//la ventaja es que son funciones que no son necesarias saber su funcionamiento interno para utilizarlas aunque sus contras son que penaliza mucho el rendimiento 
+
+//Diferencia entre Rank y dense_rank (operaciones de ventana)
+// rank()La función de ventana se utiliza para proporcionar una clasificación al resultado dentro de una partición de ventana. Esta función deja huecos en el rango cuando hay empates. sin embargo dense_rank no deja esos huecos 
+
+val departmentsDF = spark
+    .read
+    .format("jdbc")
+    .option("url", "jdbc:mysql://localhost:3306/employees")
+    .option("dbtable", "departments")
+    .option("user", "root")
+    .option("password", "root1")
+    .load()
+
+  val employeesDF = spark
+    .read
+    .format("jdbc")
+    .option("url", "jdbc:mysql://localhost:3306/employees")
+    .option("dbtable", "employees")
+    .option("user", "root")
+    .option("password", "root1")
+    .load()
+
+  val salaryDF = spark
+    .read
+    .format("jdbc")
+    .option("url", "jdbc:mysql://localhost:3306/employees")
+    .option("dbtable", "salaries")
+    .option("user", "root")
+    .option("password", "root1")
+    .load()
+
+
+  val titleDF = spark
+    .read
+    .format("jdbc")
+    .option("url", "jdbc:mysql://localhost:3306/employees")
+    .option("dbtable", "titles")
+    .option("user", "root")
+    .option("password", "root1")
+    .load()
+
+  val dept_empDF = spark
+    .read
+    .format("jdbc")
+    .option("url", "jdbc:mysql://localhost:3306/employees")
+    .option("dbtable", "dept_emp")
+    .option("user", "root")
+    .option("password", "root1")
+    .load()
+
+//Utilizando operaciones de ventana obtener el salario, posición (cargo) y departamento actual de cada empleado, es decir, el último o más reciente
+
+  val w1 = Window.partitionBy("emp_no").orderBy("con.to_date")
+
+  val prueba = employeesDF.alias("emp")
+    .join(salaryDF.as("sal"), "emp_no")
+    .join(titleDF,"emp_no")
+    .join(dept_empDF.as("con"),"emp_no")
+    .join(departmentsDF,"dept_no")
+    .withColumn("rank",rank().over(w1))
+    .withColumn("maxrank",max("rank").over(w1))
+    .withColumn("sumSalary", sum("salary").over(w1))
+    .select("first_name","sumSalary","dept_name","con.from_date","con.to_date","rank", "maxrank","title").distinct()
+    .where("rank == maxrank")
+    .show(60)
+
+// COMMAND ----------
+
+// DBTITLE 1,rank()-dense_rank()
+//SELECT name, dept, RANK() OVER (PARTITION BY dept ORDER BY salary) AS rank FROM employees;
+//SELECT name, dept, DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS dense_rank FROM employees;
++-----+-----------+------+----+
+| name|       dept|salary|rank|
++-----+-----------+------+----+
+| Lisa|      Sales| 10000|   1|
+| Alex|      Sales| 30000|   2|
+| Evan|      Sales| 32000|   3|
+| Fred|Engineering| 21000|   1|
+|  Tom|Engineering| 23000|   2|
+|Chloe|Engineering| 23000|   2|
+| Paul|Engineering| 29000|   4|
+|Helen|  Marketing| 29000|   1|
+| Jane|  Marketing| 29000|   1|
+| Jeff|  Marketing| 35000|   3|
++-----+-----------+------+----+
++-----+-----------+------+----------+
+| name|       dept|salary|dense_rank|
++-----+-----------+------+----------+
+| Lisa|      Sales| 10000|         1|
+| Alex|      Sales| 30000|         2|
+| Evan|      Sales| 32000|         3|
+| Fred|Engineering| 21000|         1|
+|  Tom|Engineering| 23000|         2|
+|Chloe|Engineering| 23000|         2|
+| Paul|Engineering| 29000|         3|
+|Helen|  Marketing| 29000|         1|
+| Jane|  Marketing| 29000|         1|
+| Jeff|  Marketing| 35000|         2|
++-----+-----------+------+----------+
