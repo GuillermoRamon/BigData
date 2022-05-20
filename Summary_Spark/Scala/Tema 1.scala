@@ -24,7 +24,8 @@
 // MAGIC use APIs to write your Spark application and Spark converts this into a DAG that is
 // MAGIC executed by the core engine. 
 // MAGIC 
-// MAGIC you write your Spark code using the provided Structured APIs( in Java, R, Scala, SQL, or Python) the underlying code is decomposed into highly compact bytecode that is executed in the workers’ JVMs across the cluster
+// MAGIC you write your Spark code using the provided Structured APIs( in Java, R, Scala, SQL, or Python)
+// MAGIC the underlying code is decomposed into highly compact bytecode that is executed in the workers’ JVMs across the cluster
 
 // COMMAND ----------
 
@@ -112,7 +113,8 @@ val graph2 = graph.joinVertices(messages) {
 // MAGIC ###Spark driver
 // MAGIC Spark driver has multiple roles: it communicates with the cluster manager; it requests
 // MAGIC resources (CPU, memory, etc.) from the cluster manager for Spark’s executors
-// MAGIC (JVMs); and it transforms all the Spark operations into DAG computations, schedules them, and distributes their execution as tasks across the Spark executors. 
+// MAGIC (JVMs); and it transforms all the Spark operations into DAG computations, schedules them,
+// MAGIC and distributes their execution as tasks across the Spark executors. 
 
 // COMMAND ----------
 
@@ -171,9 +173,11 @@ val resultsDF = spark.sql("SELECT city, pop, state, zip FROM table_name")
 
 // MAGIC %md
 // MAGIC ###Distributed data and partitions
-// MAGIC Actual physical data is distributed across storage as partitions residing in either HDFS or cloud storage (see Figure 1-5). While the data is distributed as partitions across the physical cluster, Spark treats each partition as a high-level logical data abstraction—as
+// MAGIC Actual physical data is distributed across storage as partitions residing in either HDFS or cloud storage.
+// MAGIC While the data is distributed as partitions across the physical cluster, Spark treats each partition as a high-level logical data abstraction—as
 // MAGIC a DataFrame in memory.
 // MAGIC 
-// MAGIC each Spark executor is preferably allocated a task that requires it to read the partition closest to it in the network. Partitioning allows for efficient parallelism.
+// MAGIC each Spark executor is preferably allocated a task that requires it to read the partition closest to it in the network.
+// MAGIC Partitioning allows for efficient parallelism.
 // MAGIC Them allows Spark executors to process only data that is close to
 // MAGIC them, minimizing network bandwidth.
